@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>vue-3options</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.8.0/css/bulma.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+</head>
+
+<body>
+    <div id="app" class="container">
+        <div v-if="currentQuestion !== null">
+            <div v-if="!isCompleted">
+                <div v-if="isQuestionMode">
+                    <article class="message is-info">
+                        <div class="message-header">
+                            <p>{{ currentQuestion.question }}</p>
+                        </div>
+                        <div class="message-body">
+                            <ul v-for="(option, index) in currentQuestion.options">
+                                <li @click="addAnswer(index)" class="button is-fullwidth">{{ option }}</li>
+                            </ul>
+                        </div>
+                    </article>
+                </div>
+                <div v-else>
+                    <article class="message" v-bind:class="{ 'is-success': isCorrect, 'is-dark': !isCorrect }">
+                        <div class="message-header">
+                            <p>正解と解説</p>
+                        </div>
+                        <div class="message-body">
+                            <div>
+                                <p>質問</p>
+                                <p>{{ currentQuestion.question }}</p>
+                            </div>
+                            <div>
+                                <p>正解</p>
+                                <p>{{ isCorrect ? "🙆‍♂️" : "🙅‍♂️" }}
+                                    {{ currentQuestion.options[currentQuestion.answer] }}</p>
+                            </div>
+                            <div>
+                                <p>解説</p>
+                                <p>{{ currentQuestion.explanation }}</p>
+                            </div>
+                            <button @click="nextQuestion()" class="button is-fullwidth">next</button>
+                        </div>
+                    </article>
+                </div>
+            </div>
+            <div v-else>
+                <article class="message is-info">
+                    <div class="message-header">
+                        <p>全問終了！</p>
+                    </div>
+                    <div class="message-body">
+                        <p>正解数は {{ calculateGrade() }} です。</p>
+                    </div>
+                </article>
+            </div>
+        </div>
+    </div>
+    <script>
+        const vm = new Vue({
+            el: "#app",
+            data: {
+                isCompleted: false,
+                isQuestionMode: true,
+                isCorrect: false,
+                numberOfQuestion: 0,
+                questions: [],
+                answers: [],
+            },
+            mounted: function () {
+                axios
+                    .get('https://api.myjson.com/bins/10wu7y')
+                    .then(response => (this.questions = response.data))
+            },
+            computed: {
+                currentQuestion: function () {
+                    if (this.questions.length === 0) {
+                        return null;
+                    }
+                    return this.questions[this.numberOfQuestion];
+                }
+            },
+            methods: {
+                addAnswer: function (answer) {
+                    this.answers.push(answer);
+                    this.isCorrect = this.questions[this.numberOfQuestion].answer === answer;
+                    this.isQuestionMode = !this.isQuestionMode;
+                },
+                nextQuestion: function () {
+                    this.numberOfQuestion++;
+                    this.isQuestionMode = !this.isQuestionMode;
+                    if (this.numberOfQuestion === this.questions.length) {
+                        this.isCompleted = true;
+                    }
+                },
+                calculateGrade: function () {
+                    if (!this.isCompleted) {
+                        return;
+                    }
+                    numberOfCorrectAnswers = 0;
+                    for (var i = 0; i < this.questions.length; i++) {
+                        if (this.questions[i].answer === this.answers[i]) {
+                            numberOfCorrectAnswers++;
+                        }
+                    }
+                    return numberOfCorrectAnswers + "/" + this.questions.length;
+                }
+            },
+        });
+    </script>
+</body>
+
+</html>
